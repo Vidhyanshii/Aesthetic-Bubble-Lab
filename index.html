@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>✨ Aesthetic Bubble Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <canvas id="backgroundCanvas" class="background-canvas"></canvas>
+    
+    <header>
+      <h1>✨ Aesthetic Bubble Lab 🫧</h1>
+      <p>Mix colors, create glossy bubbles, and pop them to reveal positive messages!</p>
+    </header>
+
+    <main>
+      <section class="canvas-section">
+        <canvas id="bubbleCanvas"></canvas>
+        <div class="canvas-hint">Click bubbles to pop them!</div>
+      </section>
+
+      <aside class="controls">
+        <div class="panel">
+          <h3>🎨 Color Mixer</h3>
+          
+          <div class="color-mixer">
+            <div class="slider-group">
+              <label>Red</label>
+              <input type="range" id="redSlider" min="0" max="255" value="200">
+              <span id="redVal">200</span>
+            </div>
+            <div class="slider-group">
+              <label>Green</label>
+              <input type="range" id="greenSlider" min="0" max="255" value="100">
+              <span id="greenVal">100</span>
+            </div>
+            <div class="slider-group">
+              <label>Blue</label>
+              <input type="range" id="blueSlider" min="0" max="255" value="200">
+              <span id="blueVal">200</span>
+            </div>
+            <div class="color-preview" id="colorPreview" style="background: rgb(255 80 170)"></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h3>💬 Message Mode</h3>
+
+          <div class="message-mode-selector">
+            <label>
+              <input type="radio" name="messageMode" value="automated" checked>
+              Automated Messages
+            </label>
+            <label>
+              <input type="radio" name="messageMode" value="custom">
+              Custom Message
+            </label>
+          </div>
+
+          <div id="customMessageContainer" style="display: none;">
+            <textarea id="customMessage" placeholder="Write your own message here..." maxlength="100"></textarea>
+          </div>
+
+
+          <div class="button-row">
+  <button id="createBtn" class="btn primary">Create Bubble</button>
+  <button id="clearBtn" class="btn secondary">Clear All</button>
+</div>  
+</div>      
+
+          <!-- <button id="createBtn" class="btn primary">Create Bubble</button>
+          <button id="clearBtn" class="btn secondary">Clear All</button>
+        </div> -->
+        <button id="shareBtn" class="btn secondary">🔗 Share</button>
+
+        <div class="panel messages-panel">
+          <h3>💬 Positive Messages</h3>
+          <div id="messagesList" class="messages-list">
+            <p class="muted">Pop bubbles to see messages!</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Message popup -->
+    <div id="messagePopup" class="message-popup" style="display: none;">
+      <div class="popup-content">
+        <p id="popupMessage"></p>
+        <button id="closePopup" class="btn small">✨ Thanks!</button>
+      </div>
+    </div>
+
+    <!-- Share modal -->
+    <div id="shareModal" class="share-modal" style="display: none;">
+      <div class="share-content">
+        <h2>🎁 Share Your Bubble!</h2>
+        <p>Send this link to your friend to share your special message:</p>
+        <div class="share-link-group">
+          <input type="text" id="shareLink" readonly>
+          <button id="copyLinkBtn" class="btn primary">📋 Copy</button>
+        </div>
+        
+        <h3>📱 Or share on:</h3>
+        <div class="social-share-buttons">
+          <button class="social-btn whatsapp" id="shareWhatsApp" title="Share on WhatsApp">
+            <span>💬 WhatsApp</span>
+          </button>
+          <button class="social-btn facebook" id="shareFacebook" title="Share on Facebook">
+            <span>👍 Facebook</span>
+          </button>
+          <button class="social-btn twitter" id="shareTwitter" title="Share on Twitter">
+            <span>𝕏 Twitter</span>
+          </button>
+          <button class="social-btn telegram" id="shareTelegram" title="Share on Telegram">
+            <span>✈️ Telegram</span>
+          </button>
+          <button class="social-btn email" id="shareEmail" title="Share via Email">
+            <span>📧 Email</span>
+          </button>
+          <button class="social-btn instagram" id="shareInstagram" title="Share on Instagram">
+            <span>📸 Instagram</span>
+          </button>
+        </div>
+        
+        <p class="share-note">When they open this link and pop the bubble, they'll see your message! 💕</p>
+        <button id="closeShareBtn" class="btn secondary">Done</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>Made with 💜 — Create, play, and spread positivity!</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+  
+  <audio id="backgroundMusic" loop>
+    <source src="data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==" type="audio/wav">
+  </audio>
+</body>
+</html>
