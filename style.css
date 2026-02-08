@@ -171,7 +171,7 @@ canvas {
   background: linear-gradient(135deg, #ff69b4, #ffc0cb);
   border: 3px solid white;
   cursor: pointer;
-  box-shadow: 0 2px 12px rgba(111, 23, 67, 0.5);
+  box-shadow: 0 2px 12px rgba(255, 105, 180, 0.5);
 }
 .slider-group input[type="range"]::-moz-range-thumb {
   width: 20px;
