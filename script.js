@@ -30,6 +30,7 @@ const shareTwitterBtn = document.getElementById('shareTwitter');
 const shareTelegramBtn = document.getElementById('shareTelegram');
 const shareEmailBtn = document.getElementById('shareEmail');
 const shareInstagramBtn = document.getElementById('shareInstagram');
+const deployBaseInput = document.getElementById('deployBaseInput');
 
 // Positive messages
 const positiveMessages = [
@@ -648,13 +649,76 @@ function generateShareLink() {
   
   const color = `${redSlider.value},${greenSlider.value},${blueSlider.value}`;
   const encodedMessage = encodeURIComponent(message);
-  const baseUrl = window.location.origin + window.location.pathname;
-  const shareUrl = `${baseUrl}?bubble=true&msg=${encodedMessage}&color=${color}`;
-  
+  // Prefer an explicitly provided deployment base (input), then a meta tag,
+  // then fall back to the current origin/path or file href.
+  function sanitizeBase(u) {
+    if (!u) return '';
+    // Trim whitespace and trailing slash
+    u = u.trim();
+    if (u.endsWith('/')) u = u.slice(0, -1);
+    return u;
+  }
+
+  const metaDeploy = document.querySelector('meta[name="deployment-base"]');
+  const metaBase = metaDeploy ? sanitizeBase(metaDeploy.content) : '';
+  const inputBase = deployBaseInput ? sanitizeBase(deployBaseInput.value) : '';
+
+  let baseUrl = '';
+  if (inputBase) {
+    baseUrl = inputBase;
+  } else if (metaBase) {
+    baseUrl = metaBase;
+  } else {
+    try {
+      if (window.location.protocol === 'file:') {
+        baseUrl = window.location.href.split('?')[0];
+      } else {
+        baseUrl = window.location.origin + window.location.pathname;
+      }
+    } catch (e) {
+      baseUrl = window.location.href.split('?')[0];
+    }
+  }
+
+  // If there are bubbles on the canvas, serialize up to 10 of them so the
+  // recipient sees the same bubbles and messages. Positions are normalized
+  // to the canvas size so the bubbles adapt to different viewports.
+  let bubblesParam = '';
+  try {
+    if (Array.isArray(bubbles) && bubbles.length > 0) {
+      const shareable = bubbles.slice(0, 10).map(b => ({
+        x: b.x / canvas.width,
+        y: b.y / canvas.height,
+        size: b.size,
+        color: b.color,
+        message: b.message
+      }));
+      bubblesParam = '&bubbles=' + encodeURIComponent(JSON.stringify(shareable));
+    }
+  } catch (e) {
+    // ignore serialization errors and fall back to single-message sharing
+    bubblesParam = '';
+  }
+
+  const shareUrl = `${baseUrl}?bubble=true&msg=${encodedMessage}&color=${color}${bubblesParam}`;
   return shareUrl;
 }
 
 shareBtn.addEventListener('click', () => {
+  // Pre-fill deployment input from meta tag when available
+  const metaDeploy = document.querySelector('meta[name="deployment-base"]');
+  if (deployBaseInput) {
+    if (!deployBaseInput.value && metaDeploy && metaDeploy.content) {
+      deployBaseInput.value = metaDeploy.content;
+    }
+  }
+
+  // If the page was opened directly from the file system, warn the user
+  // because those links won't be reachable by other people.
+  if (window.location.protocol === 'file:') {
+    alert('Notice: You are viewing this page from your local filesystem (file://).\nThe generated link will point to a local file and will NOT be accessible to other people.\n\nIf you already deployed to Vercel/GitHub, paste your site URL into the "Deployment URL" field in this dialog before copying the link.');
+  }
+
   const shareLink = generateShareLink();
   shareLinkInput.value = shareLink;
   shareModal.style.display = 'flex';
@@ -725,48 +789,91 @@ function checkForSharedBubble() {
   const bubbleParam = urlParams.get('bubble');
   const msgParam = urlParams.get('msg');
   const colorParam = urlParams.get('color');
+  const bubblesParam = urlParams.get('bubbles');
   
-  if (bubbleParam === 'true' && msgParam) {
-    const message = decodeURIComponent(msgParam);
-    
-    // Set color if provided
-    if (colorParam) {
-      const [r, g, b] = colorParam.split(',');
-      redSlider.value = r;
-      greenSlider.value = g;
-      blueSlider.value = b;
-      updateColor();
+  if (bubbleParam === 'true') {
+    // If `bubbles` param exists, try to recreate all shared bubbles
+    if (bubblesParam) {
+      try {
+        const shared = JSON.parse(decodeURIComponent(bubblesParam));
+        if (Array.isArray(shared) && shared.length > 0) {
+          shared.slice(0, 20).forEach(s => {
+            // Map normalized positions back to current canvas size
+            const settings = {
+              color: s.color || { r: Number(redSlider.value), g: Number(greenSlider.value), b: Number(blueSlider.value) },
+              rgb: s.color ? `rgb(${s.color.r}, ${s.color.g}, ${s.color.b})` : `rgb(${redSlider.value}, ${greenSlider.value}, ${blueSlider.value})`,
+              size: s.size || 60,
+              shine: 0.7,
+              message: s.message || (msgParam ? decodeURIComponent(msgParam) : 'A special message just for you!')
+            };
+
+            const bubble = {
+              x: (typeof s.x === 'number' ? s.x * canvas.width : canvas.width / 2) + (Math.random() - 0.5) * 10,
+              y: (typeof s.y === 'number' ? s.y * canvas.height : canvas.height / 2) + (Math.random() - 0.5) * 10,
+              vx: (Math.random() - 0.5) * 2,
+              vy: (Math.random() - 0.5) * 2 - 1,
+              ...settings
+            };
+
+            bubbles.push(bubble);
+          });
+          animate();
+
+          const hint = document.querySelector('.canvas-hint');
+          hint.textContent = '✨ Pop these bubbles to see the special messages! ✨';
+          hint.style.color = '#ff69b4';
+          hint.style.fontWeight = '600';
+          return;
+        }
+      } catch (e) {
+        // Fall through to single-message handling below on parse error
+        console.warn('Failed to parse shared bubbles:', e);
+      }
     }
-    
-    // Create bubble automatically
-    const settings = {
-      color: { 
-        r: Number(redSlider.value), 
-        g: Number(greenSlider.value), 
-        b: Number(blueSlider.value) 
-      },
-      rgb: `rgb(${redSlider.value}, ${greenSlider.value}, ${blueSlider.value})`,
-      size: 60,
-      shine: 0.7,
-      message: message
-    };
-    
-    const bubble = {
-      x: canvas.width / 2 + (Math.random() - 0.5) * 100,
-      y: canvas.height / 2 + (Math.random() - 0.5) * 100,
-      vx: (Math.random() - 0.5) * 2,
-      vy: (Math.random() - 0.5) * 2 - 1,
-      ...settings
-    };
-    
-    bubbles.push(bubble);
-    animate();
-    
-    // Show hint
-    const hint = document.querySelector('.canvas-hint');
-    hint.textContent = '✨ Pop this bubble to see the special message! ✨';
-    hint.style.color = '#ff69b4';
-    hint.style.fontWeight = '600';
+
+    // Backwards-compatible single-message behavior
+    if (msgParam) {
+      const message = decodeURIComponent(msgParam);
+      
+      // Set color if provided
+      if (colorParam) {
+        const [r, g, b] = colorParam.split(',');
+        redSlider.value = r;
+        greenSlider.value = g;
+        blueSlider.value = b;
+        updateColor();
+      }
+      
+      // Create bubble automatically
+      const settings = {
+        color: { 
+          r: Number(redSlider.value), 
+          g: Number(greenSlider.value), 
+          b: Number(blueSlider.value) 
+        },
+        rgb: `rgb(${redSlider.value}, ${greenSlider.value}, ${blueSlider.value})`,
+        size: 60,
+        shine: 0.7,
+        message: message
+      };
+      
+      const bubble = {
+        x: canvas.width / 2 + (Math.random() - 0.5) * 100,
+        y: canvas.height / 2 + (Math.random() - 0.5) * 100,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2 - 1,
+        ...settings
+      };
+      
+      bubbles.push(bubble);
+      animate();
+      
+      // Show hint
+      const hint = document.querySelector('.canvas-hint');
+      hint.textContent = '✨ Pop this bubble to see the special message! ✨';
+      hint.style.color = '#ff69b4';
+      hint.style.fontWeight = '600';
+    }
   }
 }
 
