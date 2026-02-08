@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>✨ Aesthetic Bubble Lab</title>
+  <meta name="deployment-base" content="https://aesthetic-bubble-lab.vercel.app">
+  <title>Aesthetic Bubble Lab</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -41,7 +42,7 @@
               <input type="range" id="blueSlider" min="0" max="255" value="200">
               <span id="blueVal">200</span>
             </div>
-            <div class="color-preview" id="colorPreview" style="background: rgb(255 80 170)"></div>
+            <div class="color-preview" id="colorPreview"></div>
           </div>
 
           <div class="divider"></div>
@@ -100,6 +101,12 @@
         <div class="share-link-group">
           <input type="text" id="shareLink" readonly>
           <button id="copyLinkBtn" class="btn primary">📋 Copy</button>
+        </div>
+
+        <div class="deploy-base-group">
+          <label for="deployBaseInput">Deployment URL (optional)</label>
+          <input type="url" id="deployBaseInput" placeholder="https://aesthetic-bubble-lab.vercel.app" />
+          <p class="muted small">If you deployed to Vercel/GitHub Pages, paste the site URL here or add a &lt;meta name="deployment-base"&gt; tag to auto-detect it.</p>
         </div>
         
         <h3>📱 Or share on:</h3>
